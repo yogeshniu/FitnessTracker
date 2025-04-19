@@ -12,6 +12,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     
+    permissions:
+      contents: write  # Required to push to gh-pages branch
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -25,7 +28,31 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Build project
+      - name: Create static API files
+        run: |
+          mkdir -p dist/api
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Static stats data
+            const statsData = {
+              totalPushups: 1250,
+              totalSquats: 980,
+              totalSitups: 870,
+              longestStreak: 14,
+              completionRate: 78,
+              daysCompleted: 47,
+              totalDays: 60,
+              currentStreak: 7,
+              challengeProgress: 26
+            };
+            
+            fs.writeFileSync('./dist/api/stats.json', JSON.stringify(statsData));
+            console.log('Created static API files successfully');
+          "
+      
+      - name: Build client
         run: npm run build
       
       - name: Deploy to GitHub Pages
@@ -33,4 +60,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
-          cname: yourdomain.com  # Optional: If you have a custom domain
+          # Remove this line if you don't have a custom domain
+          # cname: yourdomain.com
